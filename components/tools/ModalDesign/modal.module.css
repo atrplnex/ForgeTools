@@ -2,6 +2,38 @@
     display: flex;
     width: 600px;
     height: 400px;
-    background-color: #7164c5;
+    min-width: 600px;
+    min-height: 400px;
+    background-color: #090040;
     border-radius: 10px;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 3px 5px 8px 5px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.modalTitle {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+}
+
+.modalTitle h2 {
+    color: #52D3D8;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.modalDragDropContainer {
+    display: flex;
+    width: 200px;
+    height: 90px;
+    justify-content: center;
+    align-items: center;
+}
+
+.modalDragDropContainer label {
+    color: #FFF;
+    font-size: 20px;
+    font-weight: 500;
 }
