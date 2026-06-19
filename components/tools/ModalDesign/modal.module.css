@@ -1,7 +1,8 @@
 .modalBackground {
     display: flex;
-    width: 600px;
+    width: auto;
     height: auto;
+    max-width: 800px;
     min-width: 600px;
     min-height: 400px;
     background-color: #090040;

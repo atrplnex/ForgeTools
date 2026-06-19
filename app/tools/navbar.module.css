@@ -1,0 +1,108 @@
+.navbar {
+    display: flex;
+    position: fixed;
+    height: 60px;
+    width: 100%;
+    background-color: #090040;
+    align-items: center;
+    z-index: 1000;
+}
+
+.navbarToolTitle {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 20px;
+    flex-shrink: 0;
+}
+
+.navbarToolTitle label {
+    color: #52D3D8;
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.navbarToolContainer {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Drop Down */
+.navbarToolDropDownContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+/* Always visible */
+.navbarToolDropDown {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 15px;
+    cursor: pointer;
+}
+
+.navbarToolDropDown label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.navbarToolDropDown label i {
+    transition: transform 0.2s ease;
+}
+
+.navbarToolDropContainer {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    background-color: #090040;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.25);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0.2s ease;
+    z-index: 1000;
+}
+
+.navbarToolDropDownContainer:hover .navbarToolDropContainer {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.navbarToolDropDownContainer:hover .navbarToolDropDown i {
+    transform: rotate(180deg);
+}
+
+.navbarToolItem {
+    padding: 12px 16px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.navbarToolItem:hover {
+    background-color: #130953;
+    color: #52D3D8;
+}

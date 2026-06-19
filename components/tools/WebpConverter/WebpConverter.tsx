@@ -29,7 +29,7 @@ export default function WebpConverter() {
   return (
     <div className={modals.modalBackground}>
       <div className={modals.modalTitle}>
-        <h2>WebP Converter</h2>
+        <h2>WEBP Converter</h2>
       </div>
 
       {/* Upload File Section */}
