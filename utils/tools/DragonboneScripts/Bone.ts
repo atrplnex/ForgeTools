@@ -1,6 +1,5 @@
 import { TransformObject } from "./TransformObject";
-import { Transform } from "../geom/Transform";
-import { BoneData } from "../data/ArmatureData";
+import {Transform} from "@/utils/tools/DragonboneScripts/Transform";
 
 export class Bone extends TransformObject {
     public static toString(): string {

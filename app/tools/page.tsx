@@ -6,72 +6,72 @@ import DragonBoneTester from "@/components/tools/DragonBone/DragonBoneTester";
 import Image from "next/image";
 import navbar from "./navbar.module.css";
 import container from "./component.module.css";
-import { useState } from "react";
+import {useState} from "react";
 
 export default function Home() {
-  const toolList = [
-    "Convert to Webp",
-    "Convert to PNG",
-    "Convert to PList",
-    "Bitmap Font Tester",
-    "Rich Text Tester",
-    "Dragonbone Tester",
-    "Translation Generator"
-  ];
+    const toolList = [
+        "Convert to Webp",
+        "Convert to PNG",
+        "Convert to PList",
+        "Bitmap Font Tester",
+        "Rich Text Tester",
+        "Dragonbone Tester",
+        "Translation Generator"
+    ];
 
-  const toolsByCategory: Record<string, string[]> = {
-    Converters: ["Convert to Webp", "Convert to PNG", "Convert to PList"],
-    Testers: ["Bitmap Font Tester", "RichText Tester", "Dragonbone Tester"],
-    Generators: ["Translation Generator"]
-  };
+    const toolsByCategory: Record<string, string[]> = {
+        Converters: ["Convert to Webp", "Convert to PNG", "Convert to PList"],
+        Testers: ["Bitmap Font Tester", "RichText Tester", "Dragonbone Tester"],
+        Generators: ["Translation Generator"]
+    };
 
-  const toolCategory = ["Converters", "Testers", "Generators"];
+    const toolCategory = ["Converters", "Testers", "Generators"];
 
-  const toolComponents: Record<string, React.ReactNode> = {
-    "Convert to Webp": <WebpConverter />,
-    "Convert to PNG": <PngConverter />,
-    "Convert to PList": <PListConverter />,
-    "Dragonbone Tester": <DragonBoneTester />
-  };
+    const toolComponents: Record<string, React.ReactNode> = {
+        "Convert to Webp": <WebpConverter/>,
+        "Convert to PNG": <PngConverter/>,
+        "Convert to PList": <PListConverter/>,
+        "Dragonbone Tester": <DragonBoneTester/>
+    };
 
-  const [selectedTool, setSelectedTool] = useState(toolList[0]);
+    const [selectedTool, setSelectedTool] = useState(toolList[0]);
 
-  return (
-    <div className={container.layout}>
-      {/* NAVBAR */}
-      <div className={navbar.navbar}>
-        <div className={navbar.navbarToolTitle}>
-          <label>Modern Dev Tool</label>
-        </div>
-        <div className={navbar.navbarToolContainer}>
-          {toolCategory.map((category) => (
-            <div key={category} className={navbar.navbarToolDropDownContainer}>
-              <div className={navbar.navbarToolDropDown}>
-                <label>
-                  {category}
-                  <i className="fa-solid fa-angle-down"></i>
-                </label>
-              </div>
+    return (
+        <div className={container.layout}>
+            {/* NAVBAR */}
+            <div className={navbar.navbar}>
+                <div className={navbar.navbarToolTitle}>
+                    <label>Modern Dev Tool</label>
+                </div>
+                <div className={navbar.navbarToolContainer}>
+                    {toolCategory.map((category) => (
+                        <div key={category} className={navbar.navbarToolDropDownContainer}>
+                            <div className={navbar.navbarToolDropDown}>
+                                <label>
+                                    {category}
+                                    <i className="fa-solid fa-angle-down"></i>
+                                </label>
+                            </div>
 
-              <div className={navbar.navbarToolDropContainer}>
-                {toolsByCategory[category]?.map((tool) => (
-                  <div
-                    key={tool}
-                    className={navbar.navbarToolItem}
-                    onClick={() => setSelectedTool(tool)}
-                  >
-                    {tool}
-                  </div>
-                ))}
-              </div>
+                            <div className={navbar.navbarToolDropContainer}>
+                                {toolsByCategory[category]?.map((tool) => (
+                                    <div
+                                        key={tool}
+                                        className={navbar.navbarToolItem}
+                                        onClick={() => setSelectedTool(tool)}
+                                    >
+                                        {tool}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-          ))}
+            {/* CONTENT */}
+            <div className={container.centerContainer}>
+                {toolComponents[selectedTool]}
+            </div>
         </div>
-      </div>
-      {/* CONTENT */}
-      <div className={container.centerContainer}>
-        {toolComponents[selectedTool]}
-      </div>
-    </div>
-  );
+    );
 }

@@ -10,16 +10,14 @@
 
 /* layout wrapper (you already use this in TSX) */
 .modalBackground {
+    margin-top: 60px;
     display: flex;
     position: absolute;
-    margin: 0;
     font-family: system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
-    display: flex;
-    height: 100vh;
     overflow: hidden;
-    height: auto;
+    height: 100%;
     width: 100%;
 }
 
