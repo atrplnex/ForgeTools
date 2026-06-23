@@ -5,10 +5,15 @@
     width: 100%;
 }
 
+/* NAVBAR (you said it's fixed, so assume height exists like 60px) */
+
 .centerContainer {
     flex: 1;
+
     display: flex;
     justify-content: center;
-    align-items: center;
-    overflow: hidden;
+
+    align-items: flex-start; /* ✅ IMPORTANT: allows growth downward */
+
+    overflow-y: auto; /* ✅ THIS is where scroll should happen */
 }
