@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./GameIFrame.module.css";
 
 const DEVICE_PRESETS: Record<string, { width: number; height: number }> = {
@@ -31,39 +31,73 @@ export default function GameIFrame() {
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
 
+  const [rotated, setRotated] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(false);
+
+  const [maxSize, setMaxSize] = useState({
+    width: 900,
+    height: 700,
+  });
+
+  useEffect(() => {
+    const updateSize = () => {
+      setMaxSize({
+        width: Math.max(window.innerWidth - 420, 300),
+        height: Math.max(window.innerHeight - 80, 300),
+      });
+
+      if (autoRotate) {
+        setRotated(window.innerWidth > window.innerHeight);
+      }
+    };
+
+    updateSize();
+
+    window.addEventListener("resize", updateSize);
+
+    return () => {
+      window.removeEventListener("resize", updateSize);
+    };
+  }, [autoRotate]);
+
   async function upload() {
     if (!file) return;
 
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const res = await fetch("/api/upload-game", {
-      method: "POST",
-      body: formData,
-    });
+      const res = await fetch("/api/upload-game", {
+        method: "POST",
+        body: formData,
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      alert(data.error || "Upload failed");
+      if (!res.ok) {
+        alert(data.error || "Upload failed");
+        return;
+      }
+
+      let url = data.url;
+
+      if (query.trim()) {
+        url += query.startsWith("?")
+          ? query
+          : `?${query}`;
+      }
+
+      setIframeUrl(url);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    let url = data.url;
-
-    if (query.trim()) {
-      url += query.startsWith("?") ? query : `?${query}`;
-    }
-
-    setIframeUrl(url);
-    setLoading(false);
   }
 
   function setPreset(preset: string) {
     const device = DEVICE_PRESETS[preset];
+
     if (!device) return;
 
     setWidth(device.width);
@@ -80,91 +114,130 @@ export default function GameIFrame() {
     setHeight(h);
   }
 
-  const isPortrait = height > width;
+  function rotateDevice() {
+    setRotated((prev) => !prev);
+  }
 
-  const frameWidth = isPortrait ? height : width;
-  const frameHeight = isPortrait ? width : height;
+  const frameWidth = rotated ? height : width;
+  const frameHeight = rotated ? width : height;
 
-  // FIT TO SCREEN
-  const MAX_W = 900;
-  const MAX_H = 700;
-
-  const scale = Math.min(MAX_W / frameWidth, MAX_H / frameHeight, 1);
+  const scale = Math.min(
+    maxSize.width / frameWidth,
+    maxSize.height / frameHeight,
+    1
+  );
 
   return (
     <div className={styles.wrapper}>
-      {/* SIDEBAR */}
       <aside className={styles.sidebar}>
         <div className={styles.header}>
           <h2>Game Tester</h2>
           <p>Device emulator preview</p>
         </div>
 
-        {/* FILE UPLOAD */}
         <div className={styles.card}>
           <label className={styles.label}>Game ZIP</label>
+
           <input
             type="file"
             accept=".zip"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
             className={styles.input}
+            onChange={(e) =>
+              setFile(e.target.files?.[0] || null)
+            }
           />
         </div>
 
-        {/* QUERY */}
         <div className={styles.card}>
-          <label className={styles.label}>Query Params</label>
+          <label className={styles.label}>
+            Query Params
+          </label>
+
           <textarea
             placeholder="demo=true&playerId=229"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) =>
+              setQuery(e.target.value)
+            }
             className={styles.textarea}
           />
         </div>
 
-        {/* DEVICE PRESETS */}
         <div className={styles.card}>
-          <label className={styles.label}>Device Presets</label>
+          <label className={styles.label}>
+            Device Presets
+          </label>
 
           <select
-            onChange={(e) => setPreset(e.target.value)}
+            onChange={(e) =>
+              setPreset(e.target.value)
+            }
             className={styles.select}
           >
-            <option value="">Select device</option>
+            <option value="">
+              Select device
+            </option>
 
-            <option value="mac-13">MacBook 13"</option>
-            <option value="mac-16">MacBook 16"</option>
+            <option value="mac-13">
+              MacBook 13"
+            </option>
 
-            <option value="iphone14">iPhone 14</option>
-            <option value="iphoneSE">iPhone SE</option>
+            <option value="mac-16">
+              MacBook 16"
+            </option>
 
-            <option value="ipad">iPad</option>
+            <option value="iphone14">
+              iPhone 14
+            </option>
 
-            <option value="samsungS23">Samsung S23</option>
-            <option value="samsungTab">Samsung Tab</option>
+            <option value="iphoneSE">
+              iPhone SE
+            </option>
 
-            <option value="xiaomi">Xiaomi Device</option>
-            <option value="huawei">Huawei Device</option>
+            <option value="ipad">
+              iPad
+            </option>
+
+            <option value="samsungS23">
+              Samsung S23
+            </option>
+
+            <option value="samsungTab">
+              Samsung Tab
+            </option>
+
+            <option value="xiaomi">
+              Xiaomi Device
+            </option>
+
+            <option value="huawei">
+              Huawei Device
+            </option>
           </select>
         </div>
 
-        {/* CUSTOM RESOLUTION */}
         <div className={styles.card}>
-          <label className={styles.label}>Custom Resolution</label>
+          <label className={styles.label}>
+            Custom Resolution
+          </label>
 
           <div className={styles.customRow}>
             <input
               className={styles.inputSize}
               placeholder="Width"
               value={customWidth}
-              onChange={(e) => setCustomWidth(e.target.value)}
+              onChange={(e) =>
+                setCustomWidth(e.target.value)
+              }
             />
 
             <input
               className={styles.inputSize}
               placeholder="Height"
               value={customHeight}
-              onChange={(e) => setCustomHeight(e.target.value)}
+              onChange={(e) =>
+                setCustomHeight(e.target.value)
+              }
             />
           </div>
 
@@ -176,19 +249,61 @@ export default function GameIFrame() {
           </button>
         </div>
 
-        {/* ACTIONS */}
+        <div className={styles.card}>
+          <label className={styles.label}>
+            Orientation
+          </label>
+
+          <button
+            onClick={rotateDevice}
+            className={styles.secondaryButton}
+          >
+            Rotate Device
+          </button>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginTop: "12px",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={autoRotate}
+              onChange={(e) =>
+                setAutoRotate(
+                  e.target.checked
+                )
+              }
+            />
+            Auto Rotate
+          </label>
+
+          <div
+            style={{
+              marginTop: "10px",
+              opacity: 0.8,
+            }}
+          >
+            {frameWidth} × {frameHeight}
+          </div>
+        </div>
+
         <div className={styles.actions}>
           <button
             onClick={upload}
             disabled={loading}
             className={styles.primaryButton}
           >
-            {loading ? "Loading..." : "Load Game"}
+            {loading
+              ? "Loading..."
+              : "Load Game"}
           </button>
         </div>
       </aside>
 
-      {/* MAIN VIEW */}
       <main className={styles.main}>
         {iframeUrl ? (
           <div className={styles.viewportWrapper}>
@@ -198,9 +313,15 @@ export default function GameIFrame() {
                 width: frameWidth,
                 height: frameHeight,
                 transform: `scale(${scale})`,
+                transformOrigin:
+                  "center center",
               }}
             >
-              <iframe src={iframeUrl} className={styles.iframe} />
+              <iframe
+                key={`${frameWidth}-${frameHeight}`}
+                src={iframeUrl}
+                className={styles.iframe}
+              />
             </div>
           </div>
         ) : (
