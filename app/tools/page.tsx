@@ -5,6 +5,7 @@ import PListConverter from "@/components/tools/PListConverter/PListConverter";
 import DragonBoneTester from "@/components/tools/DragonBone/DragonBoneTester";
 import IFrameSimulator from "@/components/tools/GameIFrame/GameIFrame";
 import MockupLayout from "@/components/tools/MockupLayout/MockupLayout"
+import TranslationGenerator from "@/components/tools/TranslationGenerator/TranslationGenerator";
 
 import Image from "next/image";
 import navbar from "./navbar.module.css";
@@ -40,7 +41,8 @@ export default function Tools() {
         "Convert to PList": <PListConverter/>,
         "Dragonbone Tester": <DragonBoneTester/>,
         "IFrame Simulator": <IFrameSimulator/>,
-        "Mockup Layout": <MockupLayout/>
+        "Mockup Layout": <MockupLayout/>,
+        "Translation Generator": <TranslationGenerator/>
     };
 
     const [selectedTool, setSelectedTool] = useState(toolList[0]);
