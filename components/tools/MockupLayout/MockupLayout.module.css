@@ -1,0 +1,75 @@
+.wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #0b0f14;
+  color: white;
+  overflow: hidden;
+}
+
+/* TOP BAR */
+.toolbar {
+  height: 52px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 10px;
+  background: #111827;
+  border-bottom: 1px solid #1f2937;
+}
+
+/* BODY */
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* LEFT: TREE */
+.sidebar {
+  width: 260px;
+  background: #0f172a;
+  border-right: 1px solid #1f2937;
+  overflow: auto;
+  padding: 10px;
+}
+
+.node {
+  padding: 5px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.node:hover {
+  background: #1e293b;
+}
+
+.active {
+  background: #2563eb;
+}
+
+/* CENTER: CANVAS */
+.canvas {
+  flex: 1;
+  position: relative;
+  background: radial-gradient(circle, #111827, #05070c);
+  overflow: hidden;
+}
+
+/* RIGHT: INSPECTOR */
+.inspector {
+  width: 260px;
+  background: #0f172a;
+  border-left: 1px solid #1f2937;
+  padding: 10px;
+  overflow: auto;
+}
+
+/* OBJECTS */
+.item {
+  position: absolute;
+  cursor: grab;
+  transform-origin: center;
+  user-select: none;
+}

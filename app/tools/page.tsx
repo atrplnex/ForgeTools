@@ -4,6 +4,7 @@ import PngConverter from "@/components/tools/PngConverter/PngConverter";
 import PListConverter from "@/components/tools/PListConverter/PListConverter";
 import DragonBoneTester from "@/components/tools/DragonBone/DragonBoneTester";
 import IFrameSimulator from "@/components/tools/GameIFrame/GameIFrame";
+import MockupLayout from "@/components/tools/MockupLayout/MockupLayout"
 
 import Image from "next/image";
 import navbar from "./navbar.module.css";
@@ -19,24 +20,27 @@ export default function Tools() {
         "Rich Text Tester",
         "Dragonbone Tester",
         "Translation Generator",
-        "IFrame Simulator"
+        "IFrame Simulator",
+        "Mockup Layout"
     ];
 
     const toolsByCategory: Record<string, string[]> = {
         Converters: ["Convert to Webp", "Convert to PNG", "Convert to PList"],
         Testers: ["Bitmap Font Tester", "RichText Tester", "Dragonbone Tester"],
         Generators: ["Translation Generator"],
-        Simulator: ["IFrame Simulator"]
+        Simulator: ["IFrame Simulator"],
+        Layout: ["Mockup Layout"]
     };
 
-    const toolCategory = ["Converters", "Testers", "Generators", "Simulator"];
+    const toolCategory = ["Converters", "Testers", "Generators", "Simulator", "Layout"];
 
     const toolComponents: Record<string, React.ReactNode> = {
         "Convert to Webp": <WebpConverter/>,
         "Convert to PNG": <PngConverter/>,
         "Convert to PList": <PListConverter/>,
         "Dragonbone Tester": <DragonBoneTester/>,
-        "IFrame Simulator": <IFrameSimulator/>
+        "IFrame Simulator": <IFrameSimulator/>,
+        "Mockup Layout": <MockupLayout/>
     };
 
     const [selectedTool, setSelectedTool] = useState(toolList[0]);
