@@ -6,6 +6,7 @@ import DragonBoneTester from "@/components/tools/DragonBone/DragonBoneTester";
 import IFrameSimulator from "@/components/tools/GameIFrame/GameIFrame";
 import MockupLayout from "@/components/tools/MockupLayout/MockupLayout"
 import TranslationGenerator from "@/components/tools/TranslationGenerator/TranslationGenerator";
+import BitmapFontTester from "@/components/tools/FontTester/FontTesterTool"
 
 import Image from "next/image";
 import navbar from "./navbar.module.css";
@@ -39,6 +40,7 @@ export default function Tools() {
         "Convert to Webp": <WebpConverter/>,
         "Convert to PNG": <PngConverter/>,
         "Convert to PList": <PListConverter/>,
+        "Bitmap Font Tester": <BitmapFontTester/>,
         "Dragonbone Tester": <DragonBoneTester/>,
         "IFrame Simulator": <IFrameSimulator/>,
         "Mockup Layout": <MockupLayout/>,
