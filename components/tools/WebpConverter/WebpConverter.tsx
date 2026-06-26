@@ -103,15 +103,11 @@ export default function WebpConverter() {
         </div>
       </div>
 
-      <div className={webpmodal.modalConvertButton}>
-        <button
-          onClick={handleConvert}
-          type="button"
-        >
+      <button className={webpmodal.modalConvertButton} onClick={handleConvert}
+          type="button">
           <i className="fa-solid fa-download"></i>
           Download
-        </button>
-      </div>
+      </button>
       <span>----- Image Preview -----</span>
 
       {/* Preview Section */}

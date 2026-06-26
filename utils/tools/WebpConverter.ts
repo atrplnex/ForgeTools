@@ -1,16 +1,11 @@
-export async function convertImagesToWebp(
-  files: File[],
-  quality: number,
-  lossless = false
-): Promise<Blob> {
+export async function convertImagesToWebp(files: File[], quality: number) {
   const formData = new FormData();
 
   files.forEach((file) => {
     formData.append("files", file);
   });
 
-  formData.append("quality", String(quality));
-  formData.append("lossless", String(lossless));
+  formData.append("quality", quality.toString());
 
   const res = await fetch("/api/convert-webp", {
     method: "POST",

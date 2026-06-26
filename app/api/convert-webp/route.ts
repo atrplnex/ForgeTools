@@ -7,6 +7,12 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
+    console.log("Entries:");
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    console.log("Files:", formData.getAll("files"));
 
     const files = formData
       .getAll("files")
@@ -21,19 +27,12 @@ export async function POST(req: Request) {
     const zip = new JSZip();
 
     for (const file of files) {
-      // Convert File → Buffer
       const buffer = Buffer.from(await file.arrayBuffer());
-
-      // Convert to WebP
       const webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
-
-      // Clean filename
       const fileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-
       zip.file(fileName, webpBuffer);
     }
 
-    // IMPORTANT FIX: use uint8array (no TS error, web-compatible)
     const content = await zip.generateAsync({ type: "nodebuffer" });
 
     return new Response(new Uint8Array(content), {
