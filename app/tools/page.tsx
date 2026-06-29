@@ -12,6 +12,7 @@ import Image from "next/image";
 import navbar from "./navbar.module.css";
 import container from "./component.module.css";
 import {useState} from "react";
+import FontAdjusterTool from "@/components/tools/FontAdjusterTool/FontAdjusterTool";
 
 export default function Tools() {
     const toolList = [
@@ -23,18 +24,20 @@ export default function Tools() {
         "Dragonbone Tester",
         "Translation Generator",
         "IFrame Simulator",
-        "Mockup Layout"
+        "Mockup Layout",
+        "Font Adjuster Tool"
     ];
 
     const toolsByCategory: Record<string, string[]> = {
         Converters: ["Convert to Webp", "Convert to PNG", "Convert to PList"],
         Testers: ["Bitmap Font Tester", "RichText Tester", "Dragonbone Tester"],
+        Editors: ["Font Adjuster Tool"],
         Generators: ["Translation Generator"],
         Simulator: ["IFrame Simulator"],
         Layout: ["Mockup Layout"]
     };
 
-    const toolCategory = ["Converters", "Testers", "Generators", "Simulator", "Layout"];
+    const toolCategory = ["Converters", "Testers", "Editors", "Generators", "Simulator", "Layout"];
 
     const toolComponents: Record<string, React.ReactNode> = {
         "Convert to Webp": <WebpConverter/>,
@@ -44,7 +47,8 @@ export default function Tools() {
         "Dragonbone Tester": <DragonBoneTester/>,
         "IFrame Simulator": <IFrameSimulator/>,
         "Mockup Layout": <MockupLayout/>,
-        "Translation Generator": <TranslationGenerator/>
+        "Translation Generator": <TranslationGenerator/>,
+        "Font Adjuster Tool": <FontAdjusterTool/>
     };
 
     const [selectedTool, setSelectedTool] = useState(toolList[0]);
