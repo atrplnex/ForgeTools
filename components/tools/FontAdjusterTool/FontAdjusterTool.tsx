@@ -13,11 +13,27 @@ type Glyph = {
     xadvance: number;
 };
 
+type FontCommon = {
+    lineHeight: number;
+    base: number;
+};
+
+// A character positioned with real pixel coordinates, computed from a manual
+// "pen position" walk across testText (mirrors how a bitmap-font renderer
+// actually lays out glyphs) instead of relying on the browser's own inline
+// layout/alignment rules.
+type PositionedChar =
+    | { kind: "glyph"; key: string; glyph: Glyph; x: number; y: number }
+    | { kind: "missing"; key: string; x: number; y: number; size: number };
+
+const DEFAULT_COMMON: FontCommon = { lineHeight: 32, base: 26 };
+
 export default function FontTesterTool() {
     const [fntFile, setFntFile] = useState<File | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [testText, setTestText] = useState("ABC123");
     const [glyphMap, setGlyphMap] = useState<Record<string, Glyph>>({});
+    const [fontCommon, setFontCommon] = useState<FontCommon>(DEFAULT_COMMON);
     const [originalFntText, setOriginalFntText] = useState<string>("");
     const [atlasSize, setAtlasSize] = useState({ w: 0, h: 0 });
 
@@ -45,11 +61,87 @@ export default function FontTesterTool() {
         };
     }, [imageFile]);
 
-    const parseFnt = (text: string) => {
-        const map: Record<string, Glyph> = {};
+    // Typical xadvance for this font, used only as a stand-in width for
+    // characters that have no glyph entry so the preview doesn't collapse
+    // them to zero width.
+    const fallbackAdvance = useMemo(() => {
+        const advances = Object.values(glyphMap)
+            .map((g) => g.xadvance)
+            .filter((v) => v > 0);
+
+        if (!advances.length) return 16;
+        return Math.round(advances.reduce((a, b) => a + b, 0) / advances.length);
+    }, [glyphMap]);
+
+    // Walks testText character-by-character the way a bitmap-font renderer
+    // actually does: a "pen" starts at (0,0), each glyph is drawn at
+    // pen + (xoffset, yoffset), and the pen then advances by xadvance.
+    // An explicit "\n" resets the pen to the next line using the FNT's own
+    // lineHeight. Producing real pixel coordinates here (instead of leaning
+    // on inline-block flow + margins) is what removes the auto-align issue.
+    const layout = useMemo(() => {
+        const chars: PositionedChar[] = [];
+        let penX = 0;
+        let penY = 0;
+        let maxWidth = 0;
+        let lineCount = 1;
+
+        Array.from(testText).forEach((char, i) => {
+            if (char === "\n") {
+                maxWidth = Math.max(maxWidth, penX);
+                penX = 0;
+                penY += fontCommon.lineHeight;
+                lineCount += 1;
+                return;
+            }
+
+            const code = char.codePointAt(0)!;
+            const glyph =
+                glyphMap[char] ?? glyphMap[String(code)] ?? glyphMap[code.toString()];
+
+            if (!glyph) {
+                chars.push({ kind: "missing", key: `${i}`, x: penX, y: penY, size: fallbackAdvance });
+                penX += fallbackAdvance;
+                return;
+            }
+
+            chars.push({
+                kind: "glyph",
+                key: `${i}`,
+                glyph,
+                x: penX + glyph.xoffset,
+                y: penY + glyph.yoffset,
+            });
+            penX += glyph.xadvance;
+        });
+
+        maxWidth = Math.max(maxWidth, penX);
+
+        return {
+            chars,
+            width: Math.max(maxWidth, 1),
+            height: penY + fontCommon.lineHeight,
+            lineCount,
+        };
+    }, [testText, glyphMap, fontCommon, fallbackAdvance]);
+
+    const parseFnt = (text: string): { glyphs: Record<string, Glyph>; common: FontCommon } => {
+        const glyphs: Record<string, Glyph> = {};
+        let common: FontCommon = { ...DEFAULT_COMMON };
         const lines = text.split("\n");
 
         for (const line of lines) {
+            // "common" carries the line metrics (lineHeight/base) needed to lay
+            // out multiple lines and position glyphs vertically the way a real
+            // bitmap-font renderer would, rather than approximating them.
+            if (line.startsWith("common ")) {
+                common = {
+                    lineHeight: Number(/lineHeight=(-?\d+)/.exec(line)?.[1] ?? common.lineHeight),
+                    base: Number(/base=(-?\d+)/.exec(line)?.[1] ?? common.base),
+                };
+                continue;
+            }
+
             if (line.startsWith("char ")) {
                 const matchId = /id=(-?\d+)/.exec(line);
                 if (!matchId) continue;
@@ -57,7 +149,7 @@ export default function FontTesterTool() {
                 const id = Number(matchId[1]);
                 const char = String.fromCharCode(id);
 
-                map[char] = {
+                glyphs[char] = {
                     id,
                     x: Number(/x=(-?\d+)/.exec(line)?.[1] ?? 0),
                     y: Number(/y=(-?\d+)/.exec(line)?.[1] ?? 0),
@@ -70,7 +162,7 @@ export default function FontTesterTool() {
             }
         }
 
-        return map;
+        return { glyphs, common };
     };
 
     const loadFont = () => {
@@ -88,7 +180,9 @@ export default function FontTesterTool() {
 
             const text = await file.text();
             setOriginalFntText(text);
-            setGlyphMap(parseFnt(text));
+            const parsed = parseFnt(text);
+            setGlyphMap(parsed.glyphs);
+            setFontCommon(parsed.common);
         };
 
         input.click();
@@ -222,55 +316,97 @@ export default function FontTesterTool() {
             <main className={styles.viewer}>
                 {/* Preview */}
                 <div className={styles.card} style={{ marginBottom: "1rem" }}>
-                    <div className={styles.preview}>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "baseline",
+                            marginBottom: "0.5rem",
+                        }}
+                    >
+                        <h2 style={{ margin: 0 }}>Preview</h2>
+                        {atlasUrl && (
+                            <span style={{ fontSize: "0.8rem", color: "#888" }}>
+                                Line Height: {fontCommon.lineHeight}px · Base: {fontCommon.base}px
+                            </span>
+                        )}
+                    </div>
+
+                    <div className={styles.preview} style={{ overflow: "auto" }}>
                         {!atlasUrl && (
                             <div className={styles.empty}>
                                 Load a font atlas to start previewing.
                             </div>
                         )}
 
-                        {atlasUrl &&
-                            Array.from(testText).map((char, i) => {
-                                if (char === "\n") {
-                                    return <div key={i} className={styles.lineBreak} />;
-                                }
-
-                                const code = char.codePointAt(0)!;
-
-                                const glyph =
-                                    glyphMap[char] ??
-                                    glyphMap[String(code)] ??
-                                    glyphMap[code.toString()];
-
-                                if (!glyph) {
-                                    return (
-                                        <div key={i} className={styles.missingGlyph}>
-                                            ?
-                                        </div>
-                                    );
-                                }
-
-                                return (
+                        {atlasUrl && (
+                            // Fixed-size position:relative canvas: every glyph below is placed with
+                            // position:absolute at the exact pixel coordinates computed in `layout`,
+                            // so nothing here is subject to the browser's own inline-block/baseline
+                            // auto-alignment — coordinates come only from the FNT's x/y/offset/advance
+                            // values (and any edits made to them).
+                            <div
+                                style={{
+                                    position: "relative",
+                                    width: layout.width,
+                                    height: Math.max(layout.height, fontCommon.lineHeight),
+                                }}
+                            >
+                                {Array.from({ length: layout.lineCount }).map((_, line) => (
                                     <div
-                                        key={i}
+                                        key={`baseline-${line}`}
                                         style={{
-                                            width: glyph.w,
-                                            height: glyph.h,
-                                            backgroundImage: `url(${atlasUrl})`,
-                                            backgroundPosition: `-${glyph.x}px -${glyph.y}px`,
-                                            backgroundSize: `${atlasSize.w}px ${atlasSize.h}px`,
-                                            backgroundRepeat: "no-repeat",
-                                            imageRendering: "pixelated",
-                                            display: "inline-block",
-                                            border: "1px solid white", // White border added to represent layer width
-                                            boxSizing: "content-box",
-                                            // Margin additions to reflect how the offsets look roughly in layout
-                                            marginLeft: `${glyph.xoffset}px`,
-                                            marginRight: `${Math.max(0, glyph.xadvance - glyph.w - glyph.xoffset)}px`,
+                                            position: "absolute",
+                                            left: 0,
+                                            top: line * fontCommon.lineHeight + fontCommon.base,
+                                            width: "100%",
+                                            borderTop: "1px dashed rgba(255,255,255,0.25)",
+                                            pointerEvents: "none",
                                         }}
                                     />
-                                );
-                            })}
+                                ))}
+
+                                {layout.chars.map((c) =>
+                                    c.kind === "missing" ? (
+                                        <div
+                                            key={c.key}
+                                            className={styles.missingGlyph}
+                                            style={{
+                                                position: "absolute",
+                                                left: c.x,
+                                                top: c.y,
+                                                width: c.size,
+                                                height: c.size,
+                                                boxSizing: "border-box",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                            }}
+                                        >
+                                            ?
+                                        </div>
+                                    ) : (
+                                        <div
+                                            key={c.key}
+                                            style={{
+                                                position: "absolute",
+                                                left: c.x,
+                                                top: c.y,
+                                                width: c.glyph.w,
+                                                height: c.glyph.h,
+                                                backgroundImage: `url(${atlasUrl})`,
+                                                backgroundPosition: `-${c.glyph.x}px -${c.glyph.y}px`,
+                                                backgroundSize: `${atlasSize.w}px ${atlasSize.h}px`,
+                                                backgroundRepeat: "no-repeat",
+                                                imageRendering: "pixelated",
+                                                border: "1px solid white", // White border added to represent layer width
+                                                boxSizing: "content-box",
+                                            }}
+                                        />
+                                    )
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
