@@ -92,18 +92,23 @@ export default function FontTesterTool() {
     // lineHeight. Producing real pixel coordinates here (instead of leaning
     // on inline-block flow + margins) is what removes the auto-align issue.
     const layout = useMemo(() => {
-        const chars: PositionedChar[] = [];
+        // Pass 1: the pen-walk above, but keeping each character's *unshifted*
+        // position and which line it landed on — pass 2 needs both to tell
+        // whether a character is too big for the row it's sitting in.
+        type RawChar = PositionedChar & { line: number; bottom: number };
+
+        const rawChars: RawChar[] = [];
         let penX = 0;
         let penY = 0;
         let maxWidth = 0;
-        let lineCount = 1;
+        let lineIndex = 0;
 
         Array.from(testText).forEach((char, i) => {
             if (char === "\n") {
                 maxWidth = Math.max(maxWidth, penX);
                 penX = 0;
                 penY += fontCommon.lineHeight;
-                lineCount += 1;
+                lineIndex += 1;
                 return;
             }
 
@@ -112,28 +117,88 @@ export default function FontTesterTool() {
                 glyphMap[char] ?? glyphMap[String(code)] ?? glyphMap[code.toString()];
 
             if (!glyph) {
-                chars.push({ kind: "missing", key: `${i}`, x: penX, y: penY, size: fallbackAdvance });
+                rawChars.push({
+                    kind: "missing",
+                    key: `${i}`,
+                    x: penX,
+                    y: penY,
+                    size: fallbackAdvance,
+                    line: lineIndex,
+                    bottom: penY + fallbackAdvance,
+                });
                 penX += fallbackAdvance;
                 return;
             }
 
-            chars.push({
+            const y = penY + glyph.yoffset;
+            rawChars.push({
                 kind: "glyph",
                 key: `${i}`,
                 glyph,
                 x: penX + glyph.xoffset,
-                y: penY + glyph.yoffset,
+                y,
+                line: lineIndex,
+                bottom: y + glyph.h,
             });
             penX += glyph.xadvance;
         });
 
         maxWidth = Math.max(maxWidth, penX);
+        const lineCount = lineIndex + 1;
+
+        // Pass 2: a glyph that's too tall for its row — a big inline icon, or
+        // just a mis-set h/yoffset while editing in the table below — would
+        // otherwise overlap the line above it, or get clipped above the very
+        // top of the preview. For each line, work out how far down it needs
+        // to move to clear whatever sits above it, then carry that push
+        // forward so every later line stays clear too.
+        const lineTop: number[] = new Array(lineCount).fill(Infinity);
+        const lineBottom: number[] = new Array(lineCount).fill(-Infinity);
+
+        rawChars.forEach((c) => {
+            lineTop[c.line] = Math.min(lineTop[c.line], c.y);
+            lineBottom[c.line] = Math.max(lineBottom[c.line], c.bottom);
+        });
+
+        const lineShift: number[] = new Array(lineCount).fill(0);
+        for (let i = 0; i < lineCount; i++) {
+            if (lineTop[i] === Infinity) {
+                // Blank line (e.g. back-to-back "\n"s) — nothing to clear,
+                // just carry the running shift on to the next line.
+                lineShift[i] = i > 0 ? lineShift[i - 1] : 0;
+                continue;
+            }
+
+            if (i === 0) {
+                // Stop the first line from poking up above the preview's top edge.
+                lineShift[i] = Math.max(0, -lineTop[i]);
+            } else {
+                const prevShift = lineShift[i - 1];
+                const overlap = lineBottom[i - 1] - lineTop[i];
+                lineShift[i] = overlap > 0 ? prevShift + overlap : prevShift;
+            }
+        }
+
+        const chars: PositionedChar[] = rawChars.map((c) => {
+            const y = c.y + lineShift[c.line];
+            return c.kind === "missing"
+                ? { kind: "missing", key: c.key, x: c.x, y, size: c.size }
+                : { kind: "glyph", key: c.key, glyph: c.glyph, x: c.x, y };
+        });
+
+        const lastShift = lineShift[lineCount - 1];
+        const naturalHeight = penY + fontCommon.lineHeight + lastShift;
+        const contentBottom =
+            lineBottom[lineCount - 1] === -Infinity
+                ? naturalHeight
+                : lineBottom[lineCount - 1] + lastShift;
 
         return {
             chars,
             width: Math.max(maxWidth, 1),
-            height: penY + fontCommon.lineHeight,
+            height: Math.max(naturalHeight, contentBottom),
             lineCount,
+            lineShift,
         };
     }, [testText, glyphMap, fontCommon, fallbackAdvance]);
 
@@ -365,13 +430,16 @@ export default function FontTesterTool() {
                                     minHeight: Math.max(layout.height, fontCommon.lineHeight),
                                 }}
                             >
+                                {/* Baselines shift down by the same per-line amount as the
+                                    characters below, so a row pushed down by an oversized
+                                    glyph still lines up with its own baseline marker. */}
                                 {Array.from({ length: layout.lineCount }).map((_, line) => (
                                     <div
                                         key={`baseline-${line}`}
                                         style={{
                                             position: "absolute",
                                             left: 0,
-                                            top: line * fontCommon.lineHeight + fontCommon.base,
+                                            top: line * fontCommon.lineHeight + fontCommon.base + layout.lineShift[line],
                                             width: "100%",
                                             borderTop: "1px dashed rgba(255,255,255,0.25)",
                                             pointerEvents: "none",
