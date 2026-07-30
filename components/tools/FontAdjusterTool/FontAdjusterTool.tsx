@@ -28,6 +28,18 @@ type PositionedChar =
 
 const DEFAULT_COMMON: FontCommon = { lineHeight: 32, base: 26 };
 
+// Applied to every <th> in the Glyph Editor so the header row stays pinned
+// to the top of its scroll container instead of scrolling away with the
+// data rows underneath it.
+const STICKY_HEADER_CELL = {
+    position: "sticky",
+    top: 0,
+    zIndex: 1,
+    backgroundColor: "#848484",
+    borderBottom: "1px solid #eee",
+    padding: "4px",
+} as const;
+
 export default function FontTesterTool() {
     const [fntFile, setFntFile] = useState<File | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -332,7 +344,7 @@ export default function FontTesterTool() {
                         )}
                     </div>
 
-                    <div className={styles.preview} style={{ overflow: "auto" }}>
+                    <div className={styles.preview} style={{ overflow: "auto", height: "300px" }}>
                         {!atlasUrl && (
                             <div className={styles.empty}>
                                 Load a font atlas to start previewing.
@@ -340,16 +352,17 @@ export default function FontTesterTool() {
                         )}
 
                         {atlasUrl && (
-                            // Fixed-size position:relative canvas: every glyph below is placed with
-                            // position:absolute at the exact pixel coordinates computed in `layout`,
-                            // so nothing here is subject to the browser's own inline-block/baseline
-                            // auto-alignment — coordinates come only from the FNT's x/y/offset/advance
-                            // values (and any edits made to them).
+                            // Canvas fills the complete preview area (width/height: 100%) no matter
+                            // how little text there is, but never shrinks below what the text actually
+                            // needs — minWidth/minHeight (from `layout`) grow it past 100% for long or
+                            // multi-line text, which is what the `overflow: auto` above scrolls.
                             <div
                                 style={{
                                     position: "relative",
-                                    width: layout.width,
-                                    height: Math.max(layout.height, fontCommon.lineHeight),
+                                    width: "100%",
+                                    minWidth: layout.width,
+                                    height: "100%",
+                                    minHeight: Math.max(layout.height, fontCommon.lineHeight),
                                 }}
                             >
                                 {Array.from({ length: layout.lineCount }).map((_, line) => (
@@ -423,16 +436,16 @@ export default function FontTesterTool() {
                         <div style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid #ccc", borderRadius: "4px", padding: "0.5rem" }}>
                             <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", fontSize: "0.9rem" }}>
                                 <thead>
-                                <tr style={{ borderBottom: "1px solid #eee" }}>
-                                    <th style={{ padding: "4px" }}>Char</th>
-                                    <th style={{ padding: "4px" }}>X</th>
-                                    <th style={{ padding: "4px" }}>Y</th>
-                                    <th style={{ padding: "4px" }}>W</th>
-                                    <th style={{ padding: "4px" }}>H</th>
-                                    <th style={{ padding: "4px" }}>X-Off</th>
-                                    <th style={{ padding: "4px" }}>Y-Off</th>
-                                    <th style={{ padding: "4px" }}>X-Adv</th>
-                                    <th style={{ padding: "4px", color: "#666" }}>Total Width</th>
+                                <tr>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>Char</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>X</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>Y</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>W</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>H</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>X-Off</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>Y-Off</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>X-Adv</th>
+                                    <th style={{ ...STICKY_HEADER_CELL, color: "#000" }}>Total Width</th>
                                 </tr>
                                 </thead>
                                 <tbody>
