@@ -318,7 +318,6 @@ export default function GameIFrame() {
               }}
             >
               <iframe
-                key={`${frameWidth}-${frameHeight}`}
                 src={iframeUrl}
                 className={styles.iframe}
               />
