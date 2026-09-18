@@ -63,6 +63,23 @@ export default function FontTesterTool() {
     return map;
   };
 
+  // Shared handlers so both "Browse" click and drag-and-drop use the same logic
+  const handleFontFile = async (file: File) => {
+    if (!file) return;
+
+    setFntFile(file);
+
+    const text = await file.text();
+
+    setGlyphMap(parseFnt(text));
+  };
+
+  const handleImageFile = (file: File) => {
+    if (!file) return;
+
+    setImageFile(file);
+  };
+
   const loadFont = () => {
     const input = document.createElement("input");
 
@@ -74,11 +91,7 @@ export default function FontTesterTool() {
 
       if (!file) return;
 
-      setFntFile(file);
-
-      const text = await file.text();
-
-      setGlyphMap(parseFnt(text));
+      handleFontFile(file);
     };
 
     input.click();
@@ -108,6 +121,25 @@ export default function FontTesterTool() {
 
     return Array.from(set);
   }, [testText, glyphMap]);
+
+  // Drag-and-drop helpers
+  const preventDefault = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleFontDrop = (e: React.DragEvent) => {
+    preventDefault(e);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFontFile(file);
+  };
+
+  const handleImageDrop = (e: React.DragEvent) => {
+    preventDefault(e);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageFile(file);
+  };
+
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
@@ -117,7 +149,12 @@ export default function FontTesterTool() {
 
           <div className={styles.fileGrid}>
             {/* Font */}
-            <div className={styles.fileCard}>
+            <div
+              className={styles.fileCard}
+              onDragOver={preventDefault}
+              onDragEnter={preventDefault}
+              onDrop={handleFontDrop}
+            >
               <div className={styles.fileIcon}>🅰️ Font</div>
 
               <div className={styles.fileInfo}>
@@ -132,7 +169,12 @@ export default function FontTesterTool() {
             </div>
 
             {/* Atlas */}
-            <div className={styles.fileCard}>
+            <div
+              className={styles.fileCard}
+              onDragOver={preventDefault}
+              onDragEnter={preventDefault}
+              onDrop={handleImageDrop}
+            >
               <div className={styles.fileIcon}>🖼️ Image</div>
 
               <div className={styles.fileInfo}>
@@ -153,7 +195,7 @@ export default function FontTesterTool() {
                     const file = e.target.files?.[0];
 
                     if (file) {
-                      setImageFile(file);
+                      handleImageFile(file);
                     }
                   };
 

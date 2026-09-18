@@ -1,9 +1,28 @@
 import modals from "../ModalDesign/modal.module.css";
 import pngmodal from "../PngConverter/PngConverter.module.css";
+import { convertImagesToPng } from "../../../utils/tools/PngConverter";
 import { useState } from "react";
 
 export default function PngConverter() {
   const [images, setImages] = useState<File[]>([]);
+
+  const handleConvert = async () => {
+    try {
+      const blob = await convertImagesToPng(images);
+
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "converted.zip";
+      a.click();
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Conversion failed");
+    }
+  };
 
   return (
     <div className={modals.modalBackground}>
@@ -53,9 +72,7 @@ export default function PngConverter() {
       </div>
 
       <div className={pngmodal.modalConvertButton}>
-        <button
-          type="button"
-        >
+        <button type="button" onClick={handleConvert}>
           <i className="fa-solid fa-download"></i>
           Download
         </button>
